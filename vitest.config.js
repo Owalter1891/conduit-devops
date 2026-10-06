@@ -1,12 +1,11 @@
-import react from "@vitejs/plugin-react-swc";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
   test: {
     globals: true,
-    environment: "jsdom",
-    setupFiles: "frontend/src/setupTests.js",
-    css: true,
+    environment: "node",
+    include: ["backend/**/*.test.js", "frontend/src/**/*.test.js"],
+    restoreMocks: true,
+    env: { TZ: "UTC" },
   },
 });
