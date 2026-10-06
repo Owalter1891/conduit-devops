@@ -24,7 +24,8 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "npm run lint -- --fix",
     "test:integration": "vitest run --config vitest.integration.config.js",
-    "test:smoke": "node smoke-test.mjs"
+    "test:smoke": "node smoke-test.mjs",
+    "audit": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
