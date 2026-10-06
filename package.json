@@ -25,7 +25,8 @@
     "lint:fix": "npm run lint -- --fix",
     "test:integration": "vitest run --config vitest.integration.config.js",
     "test:smoke": "node smoke-test.mjs",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm audit --audit-level=high",
+    "infra:validate": "docker compose --env-file /dev/null -f compose.yaml config --quiet && docker compose --env-file /dev/null -f compose.test.yaml config --quiet && POSTGRES_PASSWORD=validation-only JWT_KEY=validation-only docker compose --env-file /dev/null -f compose.production.yaml config --quiet"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

@@ -20,21 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: conduit_test
-          POSTGRES_PASSWORD: conduit_test
-          POSTGRES_DB: conduit_test
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U conduit_test -d conduit_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -48,6 +33,9 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      - name: Validate infrastructure configuration
+        run: npm run infra:validate
+
       - name: Install dependencies
         run: npm ci
 
@@ -60,11 +48,22 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Start integration database
+        run: docker compose --env-file /dev/null -p conduit-ci-integration -f compose.test.yaml up -d --wait --wait-timeout 60
+
       - name: Run integration tests
         run: npm run test:integration
 
       - name: Build frontend
         run: npm run build --workspace frontend
+
+      - name: Show integration database logs on failure
+        if: failure()
+        run: docker compose --env-file /dev/null -p conduit-ci-integration -f compose.test.yaml logs --no-color --tail 100
+
+      - name: Remove integration database
+        if: always()
+        run: docker compose --env-file /dev/null -p conduit-ci-integration -f compose.test.yaml down --volumes --remove-orphans
 
   publish:
     name: Publish Docker image
