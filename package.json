@@ -25,15 +25,23 @@
     "lint:fix": "npm run lint -- --fix",
     "test:integration": "vitest run --config vitest.integration.config.js",
     "test:smoke": "node smoke-test.mjs",
-    "audit": "npm audit --audit-level=high"
+    "audit": "npm audit --audit-level=high",
+    "infra:validate": "docker compose --env-file /dev/null -f compose.yaml config --quiet && docker compose --env-file /dev/null -f compose.test.yaml config --quiet && POSTGRES_PASSWORD=validation-only JWT_KEY=validation-only docker compose --env-file /dev/null -f compose.production.yaml config --quiet",
+    "test:e2e": "bash e2e/run.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
+    "@playwright/test": "^1.63.0",
     "@vitejs/plugin-react-swc": "^4.2.3",
     "concurrently": "^9.2.1",
     "eslint": "^10.0.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "concurrently": {
+      "shell-quote": "^1.12.0"
+    }
   }
 }

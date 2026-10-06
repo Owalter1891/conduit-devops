@@ -44,3 +44,7 @@ yarn-error.log*
 
 # Production Compose secrets
 .env.production
+
+# Playwright results
+playwright-report/
+test-results/
