@@ -5,7 +5,7 @@ const {
   ValidationError,
 } = require("../helper/customErrors");
 
-const errorHandler = (error, req, res, next) => {
+const errorHandler = (error, req, res, _next) => {
   console.log("\x1b[31m%s\x1b[0m", "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼");
 
   if (error instanceof UnauthorizedError) {

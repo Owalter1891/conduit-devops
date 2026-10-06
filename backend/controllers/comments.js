@@ -67,7 +67,7 @@ const deleteComment = async (req, res, next) => {
     const { loggedUser } = req;
     if (!loggedUser) throw new UnauthorizedError();
 
-    const { slug, commentId } = req.params;
+    const { commentId } = req.params;
 
     const comment = await Comment.findByPk(commentId);
     if (!comment) throw new NotFoundError("Comment");

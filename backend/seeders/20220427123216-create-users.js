@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     const users = Array(5)
       .fill(null)
       .map((_, index) => ({
@@ -15,7 +15,7 @@ module.exports = {
     await queryInterface.bulkInsert("Users", users, {});
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete("Users", null, {});
   },
 };

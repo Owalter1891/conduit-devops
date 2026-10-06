@@ -24,7 +24,7 @@ function AuthorInfo() {
         console.error(error);
         navigate("/not-found", { replace: true });
       });
-  }, [username, headers, state, navigate]);
+  }, [username, headers, state, navigate, bio]);
 
   const followHandler = ({ followersCount, following }) => {
     setAuthor((prev) => ({ ...prev, followersCount, following }));
