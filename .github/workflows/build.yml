@@ -16,9 +16,24 @@ concurrency:
 
 jobs:
   build:
-    name: Lint, unit tests and build
+    name: Lint, tests and build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: conduit_test
+          POSTGRES_PASSWORD: conduit_test
+          POSTGRES_DB: conduit_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U conduit_test -d conduit_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Check out repository
@@ -41,6 +56,9 @@ jobs:
 
       - name: Run unit tests
         run: npm test
+
+      - name: Run integration tests
+        run: npm run test:integration
 
       - name: Build frontend
         run: npm run build --workspace frontend
