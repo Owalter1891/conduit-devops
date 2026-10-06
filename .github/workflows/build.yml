@@ -1,4 +1,4 @@
-name: CI and publish
+name: CI, publish and verify
 
 on:
   pull_request:
@@ -124,3 +124,56 @@ jobs:
         run: |
           echo "Published image: \`$IMAGE\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Digest: \`$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+
+  verify-deployment:
+    name: Verify published deployment
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    env:
+      # Pin the deployment to the exact artifact produced by this workflow run.
+      APP_IMAGE: ${{ needs.publish.outputs.image }}@${{ needs.publish.outputs.digest }}
+      COMPOSE_FILE: compose.production.yaml
+      COMPOSE_PROJECT_NAME: conduit-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_BIND_ADDRESS: 127.0.0.1
+      APP_PORT: '8080'
+      # Disposable credentials, used only inside this temporary runner.
+      POSTGRES_PASSWORD: smoke-test-database-only
+      JWT_KEY: smoke-test-signing-key-only
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start published image and PostgreSQL
+        run: docker compose --env-file /dev/null up -d --no-build --pull always --wait --wait-timeout 120
+
+      - name: Smoke-test deployment
+        run: npm run test:smoke
+
+      - name: Show container status and logs on failure
+        if: failure()
+        run: |
+          docker compose --env-file /dev/null ps -a
+          docker compose --env-file /dev/null logs --no-color --tail 100
+
+      - name: Remove temporary deployment and database
+        if: always()
+        run: docker compose --env-file /dev/null down --volumes --remove-orphans

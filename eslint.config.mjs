@@ -3,7 +3,7 @@ import globals from "globals";
 import hooks from "eslint-plugin-react-hooks";
 
 export default [
-  { ignores: ["**/node_modules/**", "**/dist/**", "**/coverage/**"] },
+  { ignores: ["**/node_modules/**", "**/dist/**", "**/coverage/**", "**/.venv/**"] },
   {
     files: ["**/*.{js,jsx,mjs}", "backend/.sequelizerc"],
     rules: {

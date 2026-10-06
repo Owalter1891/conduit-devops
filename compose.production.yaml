@@ -3,7 +3,7 @@ name: conduit-production
 services:
   app:
     build: .
-    image: conduit-devops:local
+    image: ${APP_IMAGE:-conduit-devops:local}
     init: true
     restart: unless-stopped
     ports:
