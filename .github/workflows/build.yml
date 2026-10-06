@@ -18,7 +18,7 @@ jobs:
   build:
     name: Lint, tests and build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -56,6 +56,12 @@ jobs:
 
       - name: Build frontend
         run: npm run build --workspace frontend
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser E2E tests
+        run: npm run test:e2e
 
       - name: Show integration database logs on failure
         if: failure()
