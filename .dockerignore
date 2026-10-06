@@ -11,3 +11,7 @@ backend/integration
 .DS_Store
 .vscode
 .idea
+
+# Playwright results
+playwright-report/
+test-results/
