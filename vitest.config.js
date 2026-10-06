@@ -5,6 +5,7 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["backend/**/*.test.js", "frontend/src/**/*.test.js"],
+    exclude: ["backend/integration/**", "**/node_modules/**"],
     restoreMocks: true,
     env: { TZ: "UTC" },
   },

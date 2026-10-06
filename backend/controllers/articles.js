@@ -107,7 +107,7 @@ const createArticle = async (req, res, next) => {
     delete loggedUser.dataValues.token;
 
     article.dataValues.tagList = tagList;
-    article.setAuthor(loggedUser);
+    await article.setAuthor(loggedUser);
     article.dataValues.author = loggedUser;
     await appendFollowers(loggedUser, loggedUser);
     await appendFavorites(loggedUser, article);

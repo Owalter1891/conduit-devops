@@ -1,0 +1,18 @@
+name: conduit-integration
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: conduit_test
+      POSTGRES_PASSWORD: conduit_test
+      POSTGRES_DB: conduit_test
+    ports:
+      - "127.0.0.1:5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conduit_test -d conduit_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -22,7 +22,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings 0",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "npm run lint -- --fix",
+    "test:integration": "vitest run --config vitest.integration.config.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
