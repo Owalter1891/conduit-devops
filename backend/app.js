@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("node:path");
 const cors = require("cors");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -13,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static("../frontend/dist"));
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 } else {
   app.get("/", (req, res) => res.json({ status: "API is running on /api" }));
 }
@@ -22,7 +23,17 @@ app.use("/api/user", userRoutes);
 app.use("/api/articles", articlesRoutes);
 app.use("/api/profiles", profilesRoutes);
 app.use("/api/tags", tagsRoutes);
-app.get("/*any", (req, res) =>
+// Unknown API endpoints must return JSON, including in production.
+app.use("/api", (req, res) =>
+  res.status(404).json({ errors: { body: ["Not found"] } }),
+);
+if (process.env.NODE_ENV === "production") {
+  app.get("/{*page}", (req, res, next) => {
+    if (path.extname(req.path) || !req.accepts("html")) return next();
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  });
+}
+app.get("/{*any}", (req, res) =>
   res.status(404).json({ errors: { body: ["Not found"] } }),
 );
 app.use(errorHandler);

@@ -23,6 +23,6 @@ module.exports = {
     database: process.env.PROD_DB_NAME,
     host: process.env.PROD_DB_HOSTNAME,
     dialect: process.env.PROD_DB_DIALECT,
-    logging: process.env.PROD_DB_LOGGING,
+    logging: false,
   },
 };
