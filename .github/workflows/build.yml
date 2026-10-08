@@ -178,6 +178,9 @@ jobs:
           SMOKE_WRITE_TESTS: '1'
         run: npm run test:smoke
 
+      - name: Verify data survives container recreation
+        run: npm run test:persistence
+
       - name: Show container status and logs on failure
         if: failure()
         run: |

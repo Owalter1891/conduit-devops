@@ -26,4 +26,5 @@ trap cleanup EXIT
 "${compose[@]}" down --volumes --remove-orphans
 "${compose[@]}" up -d --build --wait --wait-timeout 120
 SMOKE_BASE_URL="http://127.0.0.1:${APP_PORT}" SMOKE_WRITE_TESTS=1 npm run test:smoke
+SMOKE_BASE_URL="http://127.0.0.1:${APP_PORT}" npm run test:persistence
 node node_modules/playwright/cli.js test "$@"
