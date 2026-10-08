@@ -5,7 +5,7 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   use: {
-    baseURL: "http://127.0.0.1:18083",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:18083",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
