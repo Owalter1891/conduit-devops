@@ -29,4 +29,11 @@ compose=(docker compose --env-file "$settings_file" -f compose.production.yaml)
 "${compose[@]}" pull app db
 "${compose[@]}" up -d --no-build --pull never --wait --wait-timeout 120
 
-echo "Deployment is healthy: $APP_IMAGE"
+# Run the repository's read checks using Node from the deployed image.
+"${compose[@]}" exec -T \
+  -e SMOKE_BASE_URL=http://127.0.0.1:3001 \
+  -e SMOKE_WRITE_TESTS=0 \
+  -e SMOKE_PHASE=check \
+  app node --input-type=module < smoke-test.mjs
+
+echo "Deployment verified: $APP_IMAGE"
