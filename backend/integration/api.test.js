@@ -109,6 +109,52 @@ describe("API integration with PostgreSQL", () => {
     expect(current.body.user.username).toBe(credentials.username);
   });
 
+  it.each([
+    ["omitted", { bio: "Updated biography" }],
+    ["empty", { bio: "Updated biography", password: "" }],
+  ])("keeps the existing password when a profile update leaves it %s", async (_label, changes) => {
+    const user = await register();
+    const original = await User.findOne({ where: { email: credentials.email } });
+    const update = await request("/user", {
+      method: "PUT", token: user.token, body: { user: changes },
+    });
+    expect(update.status).toBe(200);
+    expect(update.body.user.bio).toBe(changes.bio);
+    expect(update.body.user).not.toHaveProperty("password");
+    const stored = await User.findOne({ where: { email: credentials.email } });
+    expect(stored.bio).toBe(changes.bio);
+    expect(stored.password).toBe(original.password);
+    const login = await request("/users/login", {
+      method: "POST", body: { user: { email: credentials.email, password: credentials.password } },
+    });
+    expect(login.status).toBe(200);
+    expect((await request("/user", { token: login.body.user.token })).status).toBe(200);
+  });
+
+  it("hashes a new password and only accepts the new password on login", async () => {
+    const user = await register();
+    const password = "updated-integration-password";
+    const update = await request("/user", {
+      method: "PUT", token: user.token, body: { user: { password } },
+    });
+    expect(update.status).toBe(200);
+    expect(update.body.user).not.toHaveProperty("password");
+    const stored = await User.findOne({ where: { email: credentials.email } });
+    expect(stored.password).not.toBe(password);
+    expect(await bcrypt.compare(password, stored.password)).toBe(true);
+    const oldLogin = await request("/users/login", {
+      method: "POST", body: { user: { email: credentials.email, password: credentials.password } },
+    });
+    expect(oldLogin.status).toBe(422);
+    expect(oldLogin.body).not.toHaveProperty("user");
+    const newLogin = await request("/users/login", {
+      method: "POST", body: { user: { email: credentials.email, password } },
+    });
+    expect(newLogin.status).toBe(200);
+    expect(newLogin.body.user).not.toHaveProperty("password");
+    expect((await request("/user", { token: newLogin.body.user.token })).status).toBe(200);
+  });
+
   it("rejects an incorrect password without issuing a token", async () => {
     await register();
     const response = await request("/users/login", {
