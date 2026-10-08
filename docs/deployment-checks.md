@@ -17,3 +17,16 @@ the CI and E2E runners remove their disposable databases at the end.
 `npm run test:e2e` runs these checks against the PR's built Docker image before
 the browser tests. On `main`, the deployment verification job runs them against
 the exact image digest published to GHCR.
+
+## Persistence
+
+The E2E runner and published-image verification also run `npm run test:persistence`.
+It creates an account and article, removes the app and database containers without
+deleting the database volume, and starts fresh containers using the same image.
+It then logs in with the original credentials and checks the original article,
+author and tags. This verifies storage beyond a restart of an existing container.
+
+The script only accepts the disposable `conduit-e2e` and `conduit-smoke-*` Compose
+project names. It keeps its generated credentials in a temporary file readable
+only by its owner, then deletes that file on exit. The surrounding CI/E2E runner
+removes the test database at the end.
