@@ -7,6 +7,7 @@ export COMPOSE_PROJECT_NAME=conduit-e2e
 export APP_IMAGE=conduit-devops:e2e
 export APP_BIND_ADDRESS=127.0.0.1
 export APP_PORT=18083
+export PLAYWRIGHT_BASE_URL="http://127.0.0.1:${APP_PORT}"
 export POSTGRES_PASSWORD=e2e-database-only
 export JWT_KEY=e2e-signing-key-only
 compose=(docker compose --env-file /dev/null -f compose.production.yaml)
