@@ -1,6 +1,7 @@
 const { once } = require("node:events");
 const { promisify } = require("node:util");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const app = require("../app");
 const { sequelize, User, Article } = require("../models");
 
@@ -42,12 +43,13 @@ afterAll(async () => {
   }
 });
 
-async function request(path, { method = "GET", body, token } = {}) {
+async function request(path, { method = "GET", body, token, headers = {} } = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(token && { Authorization: `Token ${token}` }),
+      ...headers,
     },
     ...(body && { body: JSON.stringify(body) }),
   });
@@ -130,6 +132,36 @@ describe("API integration with PostgreSQL", () => {
     const response = await request("/articles", { method: "POST", body: { article: articleInput } });
     expect(response.status).toBe(401);
     expect(await Article.count()).toBe(0);
+  });
+
+  it.each([
+    "Token",
+    "Token malformed",
+    "Token malformed extra",
+    "Basic malformed",
+  ])("rejects the invalid authorization header %s with HTTP 401", async (authorization) => {
+    const response = await request("/user", { headers: { Authorization: authorization } });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ errors: { body: ["You need to login first!"] } });
+  });
+
+  it.each([
+    ["invalid signature", () => jwt.sign({ email: credentials.email }, "wrong-signing-key")],
+    ["expired token", () => jwt.sign({ email: credentials.email }, process.env.JWT_KEY, { expiresIn: -1 })],
+    ["inactive token", () => jwt.sign({ email: credentials.email }, process.env.JWT_KEY, { notBefore: "1h" })],
+    ["missing email", () => jwt.sign({ username: credentials.username }, process.env.JWT_KEY)],
+  ])("rejects a token with %s with HTTP 401", async (_label, createToken) => {
+    const response = await request("/user", { token: createToken() });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ errors: { body: ["You need to login first!"] } });
+  });
+
+  it("rejects a token for a deleted user without continuing the request", async () => {
+    const user = await register();
+    await User.destroy({ where: { email: credentials.email } });
+    const response = await request("/user", { token: user.token });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ errors: { body: ["You need to login first!"] } });
   });
 
   it("persists an article, its author and tags for public retrieval", async () => {
