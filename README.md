@@ -94,7 +94,7 @@ and do not use your development data.
 
 ### Browser tests
 
-Install Chromium once, then run the two Playwright tests:
+Install Chromium once, then run the four Playwright tests:
 
 ```bash
 npx playwright install --with-deps chromium
@@ -105,6 +105,11 @@ Docker must be running. The command starts a separate app and database on port
 18083, runs the tests, and removes the test containers and data afterward.
 On Linux, installing Chromium's system dependencies may ask for sudo access.
 Use `npm run test:e2e -- --headed` to watch the tests.
+
+The browser tests cover signup and login, publishing an article, profile updates
+and password changes. The runner also checks API write flows and that data survives
+replacing the app and database containers. See [deployment checks](docs/deployment-checks.md)
+for details.
 
 ## 5. Run the full app in Docker
 
@@ -135,6 +140,10 @@ npm run test:smoke
 ```
 
 Open **http://localhost:8080**. The smoke test checks the frontend and API responses.
+
+For deployment by image digest, see [the deployment command](docs/deploying.md).
+The [local deployment guide](docs/local-deployment.md) also explains how to run
+browser tests against an existing instance.
 
 To see logs or stop:
 
