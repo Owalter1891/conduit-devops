@@ -26,7 +26,7 @@
     "test:integration": "vitest run --config vitest.integration.config.js",
     "test:smoke": "node smoke-test.mjs",
     "audit": "npm audit --audit-level=high",
-    "infra:validate": "docker compose --env-file /dev/null -f compose.yaml config --quiet && docker compose --env-file /dev/null -f compose.test.yaml config --quiet && POSTGRES_PASSWORD=validation-only JWT_KEY=validation-only docker compose --env-file /dev/null -f compose.production.yaml config --quiet",
+    "infra:validate": "docker compose --env-file /dev/null -f compose.yaml config --quiet && docker compose --env-file /dev/null -f compose.test.yaml config --quiet && POSTGRES_PASSWORD=validation-only JWT_KEY=validation-only docker compose --env-file /dev/null -f compose.production.yaml config --quiet && POSTGRES_PASSWORD=validation-only JWT_KEY=validation-only APP_DOMAIN=example.com docker compose --env-file /dev/null -f compose.production.yaml -f infra/aws/compose.aws.yaml config --quiet",
     "test:e2e": "bash e2e/run.sh"
   },
   "devDependencies": {

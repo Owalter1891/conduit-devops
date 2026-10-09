@@ -164,16 +164,29 @@ If the image is private, first run `docker login ghcr.io -u YOUR_GITHUB_USERNAME
 and enter a GitHub token with `read:packages` when prompted. Published images are
 Linux amd64; on an ARM Mac, use the local build above or Docker's amd64 emulation.
 
+## 6. Deploy to AWS
+
+Current course demo: **https://16.171.189.18.sslip.io**.
+
+Follow [the AWS setup guide](infra/aws/README.md). Terraform creates one small VM.
+After the checks pass on `main`, GitHub Actions can deploy the published image
+and check the public HTTPS website. Deployment stays disabled until you create
+the infrastructure and set the GitHub repository variables.
+
+The AWS VM, disk and public IP use Free Plan credits. The guide includes a cost
+check and instructions to remove everything when the project is finished.
+
 ## Course requirements
 
 - **CI:** GitHub Actions runs Compose validation, dependency checks, lint, unit tests,
   API tests, e2e tests and a frontend build on PRs targeting any branch and pushes to `main`.
   Manual runs also run these checks, but do not publish images.
 - **CD:** After checks pass on `main`, Actions publishes a commit-tagged image to GHCR.
-  Another job runs that exact image with PostgreSQL, runs smoke tests and cleans up.
-  The deployment is temporary; it does not leave a website running online.
-- **IaC:** The three Compose files define the containers, ports, health checks and
-  database storage. CI uses the same test and production files as local runs.
+  Another job runs that exact image with PostgreSQL and smoke-tests it. When AWS
+  deployment is enabled, the verified image is then deployed to the VM and checked
+  through its public HTTPS URL.
+- **IaC:** Compose defines containers, health checks and storage. Terraform defines
+  the AWS VM, network and deployment permissions. CI validates both.
 - **Security:** `npm audit` checks dependencies. Dependabot opens update PRs for npm
   packages and GitHub Actions each week.
 - **Collaboration:** Use a branch and PR for changes, and have the other team member
@@ -182,7 +195,6 @@ Linux amd64; on an ARM Mac, use the local build above or Docker's amd64 emulatio
   checked with local tests and CI. Document the use of AI and its limitations in the course report.
 
 Check the repository's **Actions** tab for run results and **Packages** for images.
-The workflow uses GitHub's built-in token, so it needs no deployment passwords.
 
 ## License
 

@@ -48,3 +48,17 @@ yarn-error.log*
 # Playwright results
 playwright-report/
 test-results/
+
+# Local Terraform state and settings (keep .terraform.lock.hcl in Git)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+__pycache__/
+infra/.venv/
+
+# Dedicated local AWS deployment key
+infra/aws/.ssh/
