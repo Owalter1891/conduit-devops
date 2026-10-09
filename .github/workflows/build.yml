@@ -174,7 +174,12 @@ jobs:
         run: docker compose --env-file /dev/null up -d --no-build --pull always --wait --wait-timeout 120
 
       - name: Smoke-test deployment
+        env:
+          SMOKE_WRITE_TESTS: '1'
         run: npm run test:smoke
+
+      - name: Verify data survives container recreation
+        run: npm run test:persistence
 
       - name: Show container status and logs on failure
         if: failure()
