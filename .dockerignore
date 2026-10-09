@@ -15,3 +15,7 @@ backend/integration
 # Playwright results
 playwright-report/
 test-results/
+
+infra/
+**/*.tfstate*
+**/*.tfvars*

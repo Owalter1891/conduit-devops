@@ -1,4 +1,4 @@
-name: CI, publish and verify
+name: CI, publish and deploy
 
 on:
   pull_request:
@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Let main finish deploying before a newer run can deploy.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -35,6 +36,21 @@ jobs:
 
       - name: Validate infrastructure configuration
         run: npm run infra:validate
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.16.5'
+
+      - name: Validate Terraform
+        working-directory: infra/aws
+        run: |
+          terraform fmt -check
+          terraform init -backend=false -input=false -lockfile=readonly
+          terraform validate
+
+      - name: Test deployment input validation
+        run: python3 -m unittest discover -s infra/aws -p 'test_*.py'
 
       - name: Install dependencies
         run: npm ci
@@ -190,3 +206,49 @@ jobs:
       - name: Remove temporary deployment and database
         if: always()
         run: docker compose --env-file /dev/null down --volumes --remove-orphans
+
+  deploy-aws:
+    name: Deploy to AWS
+    needs: [publish, verify-deployment]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+    env:
+      AWS_HOST: ${{ vars.AWS_HOST }}
+      APP_IMAGE: ${{ needs.publish.outputs.image }}@${{ needs.publish.outputs.digest }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Deploy the verified image over SSH
+        id: deploy
+        env:
+          AWS_SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          AWS_SSH_KNOWN_HOSTS: ${{ vars.AWS_SSH_KNOWN_HOSTS }}
+        run: python3 infra/aws/deploy.py
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Smoke-test public HTTPS deployment
+        env:
+          SMOKE_BASE_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          # Allow time for the first HTTPS certificate to be issued.
+          for attempt in $(seq 1 30); do
+            echo "Public smoke-test attempt $attempt/30"
+            if npm run test:smoke; then
+              echo "Deployed and smoke-tested: $SMOKE_BASE_URL" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
