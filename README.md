@@ -1,134 +1,189 @@
-# ![RealWorld Example App](logo.png)
+# Conduit DevOps project
 
-> **React / Vite + SWC / Express.js / Sequelize / PostgreSQL codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://realworld.io/) spec and API.**
+Course project for KTH DD2482 by Oscar Walter and Gabriel Räätäri Nyström.
 
-This codebase was created to demonstrate a fully fledged fullstack application built with **React / Vite + SWC / Express.js / Sequelize / PostgreSQL** including CRUD operations, authentication, routing, pagination, and more.
+Conduit is a small website where users can sign up, log in and write articles.
+We use an [existing example Conduit app](https://github.com/TonyMckes/conduit-realworld-example-app)
+and add tests, Docker, CI/CD and dependency checks to it. The app uses React, Express and PostgreSQL.
 
-**[Demo app](https://conduit-realworld-example-app.fly.dev/)&nbsp;&nbsp;|&nbsp;&nbsp;[With Create React App](https://github.com/TonyMckes/conduit-realworld-example-app/tree/create-react-app)&nbsp;&nbsp;|&nbsp;&nbsp;[Other RealWorld Example Apps](https://codebase.show/projects/realworld?category=fullstack)**
+## 1. Install the tools
 
-> For more information on how to this works with other frontends/backends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
+Install:
 
----
+- [Git](https://git-scm.com/downloads).
+- [Node.js 24](https://nodejs.org/en/download), which includes npm.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/), which includes Docker Compose.
+  On Linux, Docker Engine with the Compose plugin also works.
 
-## Getting Started
-
-These instructions will help you install and run the project on your local machine for development and testing.
-
-### Prerequisites
-
-Before you run the project, make sure that you have the following tools and software installed on your computer:
-
-- Text editor/IDE (e.g., VS Code, Sublime Text, Atom)
-- [Git](https://git-scm.com/downloads)
-- [Node.js](https://nodejs.org/en/download/) `v18.11.0+`
-- [NPM](https://www.npmjs.com/) (usually included with Node.js)
-- SQL database
-
-### Installation
-
-To install the project on your computer, follow these steps:
-
-1. Clone the repository to your local machine.
-
-   ```bash
-   git clone https://github.com/TonyMckes/conduit-realworld-example-app.git
-   ```
-
-2. Navigate to the project directory.
-
-   ```bash
-   cd conduit-realworld-example-app
-   ```
-
-3. Install project dependencies by running the command:
-
-   ```bash
-   npm install
-   ```
-
-### Configuration
-
-1. Create a `.env` file in the root directory of the project
-2. Add the required environment variables as specified in the [`.env.example`](backend/.env.example) file
-3. (Optional) update the Sequelize configuration parameters in the [`config.js`](backend/config/config.js) file
-4. If you are **not** using PostgreSQL, you may also have to install the driver for your database:
-
-   <details>
-   <summary>Use one of the following commands to install:</summary><br/>
-
-   > Note: `-w backend` option is used to install it in the backend [`package.json`](backend/package.json).
-
-   ```bash
-   npm install -w backend pg pg-hstore  # Postgres (already installed)
-   npm install -w backend mysql2
-   npm install -w backend mariadb
-   npm install -w backend sqlite3
-   npm install -w backend tedious       # Microsoft SQL Server
-   npm install -w backend oracledb      # Oracle Database
-   ```
-
-   > :information_source: Visit [Sequelize - Installing](https://sequelize.org/docs/v6/getting-started/#installing) for more infomation.
-
-   ***
-
-   </details>
-
-5. Create database specified by configuration by executing
-
-   > :warning: Please, make sure you have already created a superuser for your database.
-
-   ```bash
-   npm run sqlz -- db:create
-   ```
-
-   > :information_source: The command `npm run sqlz` is an alias for `npx -w backend sequelize-cli`.  
-   > Execute `npm run sqlz -- --help` to see more of `sequelize-cli` commands availables.
-
-6. Optionally you can run the following command to populate your database with some dummy data:
-
-   ```bash
-   npm run sqlz -- db:seed:all
-   ```
-
-### Usage
-
-#### Development Server
-
-To run the project, follow these steps:
-
-1. Start the development server by executing the command:
-
-   ```bash
-   npm run dev
-   ```
-
-2. Open a web browser and navigate to:
-   - Home page should be available at [`http://localhost:3000/`](http://localhost:3000).
-   - API endpoints should be available at [`http://localhost:3001/api`](http://localhost:3001/api).
-
-#### Running Tests
-
-To run tests, simply run the following command:
+Open Docker Desktop and leave it running. Check the tools in a terminal:
 
 ```bash
-npm run test
+git --version
+node --version
+npm --version
+docker compose version
 ```
 
-#### Production
+The commands below use a macOS or Linux terminal. On Windows, use WSL2 with Docker integration.
 
-The following command will build the production version of the app:
+## 2. Download the project
 
 ```bash
-npm run start
+git clone https://github.com/Owalter1891/conduit-devops.git
+cd conduit-devops
+npm ci
 ```
+
+Run all later commands from this folder. `npm ci` installs the versions saved in
+`package-lock.json`.
+
+## 3. Run the app for development
+
+Create the local settings file. Only copy it on first setup:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+The example already matches the local PostgreSQL setup. Start the database and app:
+
+```bash
+docker compose up -d --wait
+npm run dev
+```
+
+Open **http://localhost:3000**. Click **Sign up** to create an account, then try
+**New Article**. You do not need an existing account or sample data.
+
+The API runs at http://localhost:3001/api/tags. Docker creates the database, and
+the backend creates its tables when it starts.
+
+To stop, press **Ctrl+C**, then run:
+
+```bash
+docker compose down
+```
+
+Your development database is kept for the next run.
+
+## 4. Run the checks
+
+These commands do not need the app running:
+
+```bash
+npm run infra:validate  # Check the Docker Compose files
+npm run lint            # Check code style and common mistakes
+npm run audit           # Check dependencies for known vulnerabilities
+npm test                # Run unit tests
+```
+
+The audit blocks high and critical findings. Lower-severity findings are still shown.
+
+### API integration tests
+
+These test the API with a separate PostgreSQL database on port 5433:
+
+```bash
+docker compose -f compose.test.yaml up -d --wait
+npm run test:integration
+docker compose -f compose.test.yaml down
+```
+
+Run the last command even if a test fails. These tests reset their own database
+and do not use your development data.
+
+### Browser tests
+
+Install Chromium once, then run the two Playwright tests:
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+Docker must be running. The command starts a separate app and database on port
+18083, runs the tests, and removes the test containers and data afterward.
+On Linux, installing Chromium's system dependencies may ask for sudo access.
+Use `npm run test:e2e -- --headed` to watch the tests.
+
+## 5. Run the full app in Docker
+
+This runs the built frontend, backend and database together. It is separate from
+the development setup above.
+
+Copy the settings file once:
+
+```bash
+cp .env.production.example .env.production
+```
+
+Run this command twice to generate two different secrets:
+
+```bash
+openssl rand -hex 32
+```
+
+Edit `.env.production`. Paste one value after `POSTGRES_PASSWORD=` and the other
+after `JWT_KEY=`. The first is the database password; the second signs login tokens.
+Keep this file private. Git and Docker builds ignore it.
+
+Start the app and check it:
+
+```bash
+docker compose --env-file .env.production -f compose.production.yaml up -d --build --wait
+npm run test:smoke
+```
+
+Open **http://localhost:8080**. The smoke test checks the frontend and API responses.
+
+To see logs or stop:
+
+```bash
+docker compose --env-file .env.production -f compose.production.yaml logs --tail 100
+docker compose --env-file .env.production -f compose.production.yaml down
+```
+
+Stopping with `down` keeps the database. Adding `--volumes` deletes its data.
+Keep the same database password when reusing an existing database volume.
+
+### Use an image from GitHub instead
+
+Copy an image tag from a successful GitHub Actions run. Add it to `.env.production`:
+
+```dotenv
+APP_IMAGE=ghcr.io/owalter1891/conduit-devops:sha-REPLACE_WITH_FULL_COMMIT_SHA
+```
+
+Then run:
+
+```bash
+docker compose --env-file .env.production -f compose.production.yaml up -d --no-build --pull always --wait
+```
+
+If the image is private, first run `docker login ghcr.io -u YOUR_GITHUB_USERNAME`
+and enter a GitHub token with `read:packages` when prompted. Published images are
+Linux amd64; on an ARM Mac, use the local build above or Docker's amd64 emulation.
+
+## Course requirements
+
+- **CI:** GitHub Actions runs Compose validation, dependency checks, lint, unit tests,
+  API tests, e2e tests and a frontend build on PRs targeting any branch and pushes to `main`.
+  Manual runs also run these checks, but do not publish images.
+- **CD:** After checks pass on `main`, Actions publishes a commit-tagged image to GHCR.
+  Another job runs that exact image with PostgreSQL, runs smoke tests and cleans up.
+  The deployment is temporary; it does not leave a website running online.
+- **IaC:** The three Compose files define the containers, ports, health checks and
+  database storage. CI uses the same test and production files as local runs.
+- **Security:** `npm audit` checks dependencies. Dependabot opens update PRs for npm
+  packages and GitHub Actions each week.
+- **Collaboration:** Use a branch and PR for changes, and have the other team member
+  review them. Set branch protection and required reviews in GitHub settings; they are not set by these files.
+- **AI:** Codex helped with configuration, tests and documentation. Changes were
+  checked with local tests and CI. Document the use of AI and its limitations in the course report.
+
+Check the repository's **Actions** tab for run results and **Packages** for images.
+The workflow uses GitHub's built-in token, so it needs no deployment passwords.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [RealWorld](https://realworld.io/)
-- [RealWorld (GitHub)](https://github.com/gothinkster/realworld)
-- [CodebaseShow](https://codebase.show/)
-- [How to write a Good readme](https://bulldogjob.com/news/449-how-to-write-a-good-readme-for-your-github-project)
+The original app and this repository use the [MIT License](LICENSE).
