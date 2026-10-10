@@ -1,9 +1,8 @@
 # CI/CD and Infrastructure as Code for Conduit
-
-**KTH DD2482 Project report*  
 Oscar Walter (owalter@kth.se) and Gabriel Räätäri Nyström (grn@kth.se)
 
-[Repository](https://github.com/Owalter1891/conduit-devops) · [Live application](https://16.171.189.18.sslip.io)
+[Repository](https://github.com/Owalter1891/conduit-devops)
+[Live application](https://16.171.189.18.sslip.io)
 
 ## Architecture and processes
 
@@ -39,13 +38,6 @@ Compose shares app configuration between testing and deployment. Terraform provi
 
 ## Component interaction, security and collaboration
 
-The main flow is:
-
-```text
-Pull request → CI → merge to main → CI → GHCR → image verification → AWS → HTTPS smoke test
-Browser → Caddy → Express (React files and API) → PostgreSQL → persistent volume
-```
-
 Jobs pass the image tag and digest to the SSH script, which sends the Compose configuration and deploys using existing VM secrets. Caddy reaches the app on internal port 3001; Express reaches PostgreSQL by its Compose service name. A [local deployment command](docs/deploying.md) also deploys and checks a digest without Node.js on the host.
 
 ESLint rejects warnings, and `npm audit` blocks high and critical dependency findings. We updated vulnerable dependencies and added a scoped `shell-quote` override. Dependabot opens weekly npm and GitHub Actions update PRs, grouping minor and patch updates. These updates go through CI.
@@ -58,9 +50,7 @@ GitHub's `production` environment holds the SSH secret and only permits `main`. 
 
 [The successful workflow for commit `e45e2c8`](https://github.com/Owalter1891/conduit-devops/actions/runs/37955527067) demonstrates all four jobs: CI, image publishing, published-image verification and AWS deployment.
 
-The single VM is a single point of failure. Updates can briefly interrupt service, and a failed deployment or final smoke test does not trigger automatic rollback. The named volume survives container replacement, but VM destruction deletes the database. There are no automated database backups, and Terraform state is stored locally. Sequelize currently changes the schema at startup rather than using a controlled migration process.
-
-SSH is reachable from the internet because GitHub-hosted runners have changing IP addresses. Although the deployment key disables forwarding and interactive terminals, it can execute deployment code as root on this VM. It therefore remains a sensitive credential. Dependency checks do not replace container/OS scanning, and base-image tags and Action version tags can change. We have no scheduled infrastructure drift detection or continuous uptime monitoring. Free credits, the small VM's capacity, and external DNS/certificate services also limit the setup.
+The single VM is a single point of failure. Updates can interrupt the service for a short time, and a failed deployment or final smoke test does not trigger an automatic rollback which would be good. The named volume survives container replacement, but VM destruction deletes the database. There are no automated database backups, and Terraform state is stored locally. Sequelize currently changes the schema at startup rather than using a controlled migration process.
 
 ## Documented use of AI-assisted tools
 
